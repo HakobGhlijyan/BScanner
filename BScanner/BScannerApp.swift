@@ -18,3 +18,6 @@ struct BScannerApp: App {
         }
     }
 }
+
+
+//Thread 1: "NSManagedObjects of entity 'ScanSession' do not support -mutableSetValueForKey: for the property 'devices'"

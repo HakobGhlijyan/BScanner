@@ -5,5 +5,10 @@
         <attribute name="rssi" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="uuid" optional="YES" attributeType="String"/>
+        <relationship name="scanSessions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ScanSession" inverseName="devices" inverseEntity="ScanSession"/>
+    </entity>
+    <entity name="ScanSession" representedClassName="ScanSession" syncable="YES">
+        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="devices" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="DeviceEntity" inverseName="scanSessions" inverseEntity="DeviceEntity"/>
     </entity>
 </model>
