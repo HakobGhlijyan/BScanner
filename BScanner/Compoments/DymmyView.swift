@@ -19,7 +19,7 @@ struct DymmyView: View {
                         .scaledToFill()
                         .frame(width: 100, height: 100)
                 } else {
-                    Image(systemName: "doc.text.fill") // или другая иконка для старых версий iOS
+                    Image(systemName: "doc.text.fill")
                         .resizable()
                         .scaledToFill()
                         .frame(width: 100, height: 100)
