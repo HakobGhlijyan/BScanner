@@ -7,8 +7,9 @@
 
 import SwiftUI
 import CoreBluetooth
+import CoreData
 
-    //MARK: - MODEL
+//MARK: - MODEL
 struct DiscoveredPeripheral {
         // Struct to represent a discovered peripheral
         // Структура для представления обнаруженного периферийного устройства
@@ -16,11 +17,13 @@ struct DiscoveredPeripheral {
     var advertisedData: String
 }
 
-    //MARK: - SERVICE
+//MARK: - SERVICE
 class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
     //ARRAY FOR SCANED DEVICES , ITS SAVE IN DATABASE
     @Published var discoveredPeripherals = [DiscoveredPeripheral]()
     @Published var isScanning = false
+    
+    let context = PersistenceController.shared.context
     
     var centralManager: CBCentralManager!
         // Set to store unique peripherals that have been discovereds
@@ -58,12 +61,31 @@ class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
     }
     
         //MARK: - START SCAN
+//    func stopScan() {
+//            // Set isScanning to false and stop the timer
+//            // Установите isScanning в значение false и остановите таймер
+//        isScanning = false
+//        timer?.invalidate()
+//        centralManager.stopScan()
+//    }
+    
     func stopScan() {
             // Set isScanning to false and stop the timer
             // Установите isScanning в значение false и остановите таймер
         isScanning = false
         timer?.invalidate()
         centralManager.stopScan()
+
+        for discoveredPeripheral in discoveredPeripherals {
+            saveDeviceToDatabase(
+                name: discoveredPeripheral.peripheral.name,
+                uuid: discoveredPeripheral.peripheral.identifier.uuidString,
+                rssi: Int32(discoveredPeripheral.advertisedData.components(separatedBy: "rssi: ").last ?? "0") ?? 0,
+                timestamp: Date()
+            )
+        }
+
+        print("All discovered devices have been saved to the database.")
     }
     
         //MARK: - DEVICE STATE
@@ -125,4 +147,133 @@ class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
             }
         }
     }
+   
+//    func saveDeviceToDatabase(name: String?, uuid: String, rssi: Int, timestamp: Date) {
+//        let device = DeviceEntity(context: context)
+//        device.name = name
+//        device.uuid = uuid
+//        device.rssi = Int32(rssi)
+//        device.timestamp = timestamp
+//
+//        do {
+//            try context.save()
+//        } catch {
+//            print("Error saving device: \(error)")
+//        }
+//    }
+    
+    func saveDeviceToDatabase(name: String?, uuid: String, rssi: Int32, timestamp: Date) {
+        let context = PersistenceController.shared.context
+
+        let fetchRequest = DeviceEntity.fetchRequest() 
+        fetchRequest.predicate = NSPredicate(format: "uuid == %@", uuid)
+
+        do {
+            let existingDevices = try context.fetch(fetchRequest)
+
+            if let existingDevice = existingDevices.first {
+                // Обновить существующее устройство
+                existingDevice.name = name
+                existingDevice.rssi = rssi
+                existingDevice.timestamp = timestamp
+            } else {
+                // Создать новое устройство
+                let newDevice = DeviceEntity(context: context)
+                newDevice.name = name
+                newDevice.uuid = uuid
+                newDevice.rssi = rssi
+                newDevice.timestamp = timestamp
+            }
+
+            try context.save()
+            print("Device saved successfully: \(name ?? "Unknown Device")")
+        } catch {
+            print("Failed to save device: \(error)")
+        }
+    }
+
+    func showErrorAlert(message: String) {
+        // Логика для отображения ошибки через Alert
+    }
+    
 }
+
+//MARK: - MODEL + PersistenceController
+
+@objc(DeviceEntity)
+class DeviceEntity: NSManagedObject {
+    @NSManaged var name: String?
+    @NSManaged var uuid: String
+    @NSManaged var rssi: Int32
+    @NSManaged var timestamp: Date
+}
+
+class PersistenceController {
+    static let shared = PersistenceController()
+
+    let persistentContainer: NSPersistentContainer
+
+    init() {
+        persistentContainer = NSPersistentContainer(name: "BScannerDB") // Замените "ModelName" на имя вашей модели .xcdatamodeld
+        persistentContainer.loadPersistentStores { (description, error) in
+            if let error = error {
+                fatalError("Failed to load Core Data stack: \(error)")
+            }
+        }
+    }
+
+    var context: NSManagedObjectContext {
+        return persistentContainer.viewContext
+    }
+
+    func saveContext() {
+        let context = persistentContainer.viewContext
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch {
+                let nserror = error as NSError
+                fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
+            }
+        }
+    }
+    
+//    func fetchDevices() -> [DeviceEntity] {
+//        let fetchRequest = DeviceEntity.fetchRequest() as! NSFetchRequest<DeviceEntity>
+//        do {
+//            return try context.fetch(fetchRequest)
+//        } catch {
+//            print("Failed to fetch devices: \(error)")
+//            return []
+//        }
+//    }
+    
+    func fetchDevices() -> [DeviceEntity] {
+        let fetchRequest = DeviceEntity.fetchRequest()
+        do {
+            return try context.fetch(fetchRequest)
+        } catch {
+            print("Failed to fetch devices: \(error)")
+            return []
+        }
+    }
+}
+
+extension DeviceEntity {
+    @nonobjc public class func fetchRequest() -> NSFetchRequest<DeviceEntity> {
+        return NSFetchRequest<DeviceEntity>(entityName: "DeviceEntity")
+    }
+}
+
+/*
+ // cmd + opt + / ->
+ 
+ /// Description
+ /// - Parameters:
+ ///   - name: name description
+ ///   - uuid: uuid description
+ ///   - rssi: rssi description
+ ///   - timestamp: timestamp description
+ 
+ */
+

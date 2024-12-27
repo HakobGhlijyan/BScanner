@@ -6,9 +6,8 @@
 //
 
 import SwiftUI
-
-import SwiftUI
 import CoreBluetooth
+import CoreData
 
 struct ContentView: View {
     @ObservedObject private var bluetoothScanner = BluetoothScanner()
@@ -81,15 +80,23 @@ struct ContentView: View {
                     .foregroundColor(Color.white)
                     .cornerRadius(15.0)
                     
-                    Button(action: {
-                        
-                    }) {
+//                    Button(action: {
+//
+//                    }) {
+//                        Text("Scanning History")
+//                    }
+//                    .padding()
+//                    .background(Color.blue)
+//                    .foregroundColor(Color.white)
+//                    .cornerRadius(15.0)
+                    
+                    NavigationLink(destination: HistoryView()) {
                         Text("Scanning History")
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(Color.white)
+                            .cornerRadius(15.0)
                     }
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(Color.white)
-                    .cornerRadius(15.0)
                 }
             }
             .padding()
@@ -101,4 +108,86 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+}
+
+struct HistoryView: View {
+    @StateObject private var viewModel = DeviceListViewModel()
+    
+    var body: some View {
+        List(viewModel.devices, id: \.uuid) { device in
+            VStack(alignment: .leading) {
+                Text(device.name ?? "Unknown Device")
+                    .font(.headline)
+                    .foregroundColor(.black)
+                Text("UUID: \(device.uuid)")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                Text("RSSI: \(device.rssi) dB")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                Text("Timestamp: \(device.timestamp, formatter: dateFormatter)")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+        }
+        .onAppear {
+            viewModel.fetchDevices()
+            print("HistoryView Start")
+        }
+        .navigationTitle("Scanning History")
+    }
+    
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter
+    }
+}
+
+//class DeviceListViewModel: ObservableObject {
+//    @Published var devices: [DeviceEntity] = []
+//    let context = PersistenceController.shared.context
+//
+//    func fetchDevices() {
+//        let context = PersistenceController.shared.context
+//        let fetchRequest = DeviceEntity.fetchRequest() as! NSFetchRequest<DeviceEntity>
+//        
+//        do {
+//            self.devices = try context.fetch(fetchRequest)
+//        } catch {
+//            print("Failed to fetch devices: \(error)")
+//            self.devices = []
+//        }
+//    }
+//    
+//    @discardableResult
+//    func fetchDevices() -> [DeviceEntity] {
+//        let fetchRequest = DeviceEntity.fetchRequest()
+//        do {
+//            return try context.fetch(fetchRequest)
+//        } catch {
+//            print("Failed to fetch devices: \(error)")
+//            return []
+//        }
+//    }
+//}
+
+
+class DeviceListViewModel: ObservableObject {
+    @Published var devices: [DeviceEntity] = []
+    let context = PersistenceController.shared.context
+    
+    func fetchDevices() {
+        let fetchRequest = DeviceEntity.fetchRequest()
+        do {
+            let fetchedDevices = try context.fetch(fetchRequest)
+            DispatchQueue.main.async {
+                self.devices = fetchedDevices
+            }
+            print("Start fetch devices")
+        } catch {
+            print("Failed to fetch devices: \(error)")
+        }
+    }
 }
