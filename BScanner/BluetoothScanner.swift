@@ -20,7 +20,7 @@ struct DiscoveredPeripheral {
 //MARK: - SERVICE
 class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
     //ARRAY FOR SCANED DEVICES , ITS SAVE IN DATABASE
-    @Published var discoveredPeripherals = [DiscoveredPeripheral]()
+    @Published var discoveredPeripherals: [DiscoveredPeripheral] = []
     @Published var isScanning = false
     let context = PersistenceController.shared.context
     var centralManager: CBCentralManager!
@@ -36,25 +36,45 @@ class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
     
         //MARK: - START SCAN
     func startScan() {
-        if centralManager.state == .poweredOn {
-                // Set isScanning to true and clear the discovered peripherals list
-                // Установите для параметра isScanning значение true и очистите список обнаруженных периферийных устройств
-            isScanning = true
-            discoveredPeripherals.removeAll()
-            discoveredPeripheralSet.removeAll()
-            objectWillChange.send()
-            
-                // Start scanning for peripherals
-                // Начните поиск периферийных устройств
-            centralManager.scanForPeripherals(withServices: nil)
-            
-                // Start a timer to stop and restart the scan every 10 seconds
-                // Запустите таймер, чтобы останавливать и перезапускать сканирование каждые 10 секунды
-            timer?.invalidate()
-            timer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] timer in
-                self?.centralManager.stopScan()
-                self?.centralManager.scanForPeripherals(withServices: nil)
-            }
+//        if centralManager.state == .poweredOn {
+//                // Set isScanning to true and clear the discovered peripherals list
+//                // Установите для параметра isScanning значение true и очистите список обнаруженных периферийных устройств
+//            isScanning = true
+//            discoveredPeripherals.removeAll()
+//            discoveredPeripheralSet.removeAll()
+//            objectWillChange.send()
+//            
+//                // Start scanning for peripherals
+//                // Начните поиск периферийных устройств
+//            centralManager.scanForPeripherals(withServices: nil)
+//            
+//                // Start a timer to stop and restart the scan every 10 seconds
+//                // Запустите таймер, чтобы останавливать и перезапускать сканирование каждые 10 секунды
+//            timer?.invalidate()
+//            timer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] timer in
+//                self?.centralManager.stopScan()
+//                self?.centralManager.scanForPeripherals(withServices: nil)
+//            }
+//        }
+        
+            // Set isScanning to true and clear the discovered peripherals list
+            // Установите для параметра isScanning значение true и очистите список обнаруженных периферийных устройств
+        print("Start scan")
+        isScanning = true
+        discoveredPeripherals.removeAll()
+        discoveredPeripheralSet.removeAll()
+        objectWillChange.send()
+        
+            // Start scanning for peripherals
+            // Начните поиск периферийных устройств
+        centralManager.scanForPeripherals(withServices: nil)
+        
+            // Start a timer to stop and restart the scan every 10 seconds
+            // Запустите таймер, чтобы останавливать и перезапускать сканирование каждые 10 секунды
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] timer in
+            self?.centralManager.stopScan()
+            self?.centralManager.scanForPeripherals(withServices: nil)
         }
     }
     
@@ -116,6 +136,10 @@ class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
         centralManager.stopScan()
         
         stopScanAndSaveSession()
+        
+        discoveredPeripherals.removeAll()
+        
+        print("Stop scan")
     }
     
         // Метод для сохранения сессии сканирования
@@ -129,14 +153,18 @@ class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
             deviceEntity.name = peripheral.peripheral.name
             deviceEntity.uuid = peripheral.peripheral.identifier.uuidString
 //            deviceEntity.rssi = peripheral.advertisedData.rssi
-            deviceEntity.rssi = Int32(peripheral.advertisedData.components(separatedBy: "rssi: ").last ?? "0") ?? 0
+            deviceEntity.rssi = Int32(peripheral.advertisedData.components(separatedBy: "actual rssi: ").last ?? "0") ?? 0
+            deviceEntity.advertisedData = peripheral.advertisedData
             deviceEntity.timestamp = newSession.timestamp  // Время сессии
             newSession.addToDevices(deviceEntity)
+            
+            print("Device saved successfully: \(peripheral.peripheral.name ?? "Unknown Device")")
         }
         
             // Сохраняем сессию и устройства
         do {
             try context.save()
+            
             print("Scan session saved successfully")
         } catch {
             print("Failed to save session: \(error)")
@@ -193,7 +221,7 @@ class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
                 stopScan()
             case .poweredOn:
                 print("central.state is .poweredOn")
-                startScan()
+                //startScan() this only auto start
             @unknown default:
                 print("central.state is unknown")
         }
@@ -307,35 +335,35 @@ class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
 //        }
 //    }
     
-    func saveDeviceToDatabase(name: String?, uuid: String, rssi: Int32, timestamp: Date, session: ScanSession) {
-        let fetchRequest = DeviceEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "uuid == %@", uuid)
-
-        do {
-            let existingDevices = try context.fetch(fetchRequest)
-
-            if let existingDevice = existingDevices.first {
-                // Обновить существующее устройство
-                existingDevice.name = name
-                existingDevice.rssi = rssi
-                existingDevice.timestamp = timestamp
-                existingDevice.addToScanSessions(session)
-            } else {
-                // Создать новое устройство
-                let newDevice = DeviceEntity(context: context)
-                newDevice.name = name
-                newDevice.uuid = uuid
-                newDevice.rssi = rssi
-                newDevice.timestamp = timestamp
-                newDevice.addToScanSessions(session)
-            }
-
-            try context.save()
-            print("Device saved successfully: \(name ?? "Unknown Device")")
-        } catch {
-            print("Failed to save device: \(error)")
-        }
-    }
+//    func saveDeviceToDatabase(name: String?, uuid: String, rssi: Int32, timestamp: Date, session: ScanSession) {
+//        let fetchRequest = DeviceEntity.fetchRequest()
+//        fetchRequest.predicate = NSPredicate(format: "uuid == %@", uuid)
+//
+//        do {
+//            let existingDevices = try context.fetch(fetchRequest)
+//
+//            if let existingDevice = existingDevices.first {
+//                // Обновить существующее устройство
+//                existingDevice.name = name
+//                existingDevice.rssi = rssi
+//                existingDevice.timestamp = timestamp
+//                existingDevice.addToScanSessions(session)
+//            } else {
+//                // Создать новое устройство
+//                let newDevice = DeviceEntity(context: context)
+//                newDevice.name = name
+//                newDevice.uuid = uuid
+//                newDevice.rssi = rssi
+//                newDevice.timestamp = timestamp
+//                newDevice.addToScanSessions(session)
+//            }
+//
+//            try context.save()
+//            print("Device saved successfully: \(name ?? "Unknown Device")")
+//        } catch {
+//            print("Failed to save device: \(error)")
+//        }
+//    }
 
     func showErrorAlert(message: String) {
         // Логика для отображения ошибки через Alert
@@ -360,6 +388,7 @@ class DeviceEntity: NSManagedObject {
     @NSManaged var rssi: Int32
     @NSManaged var timestamp: Date
     @NSManaged var scanSessions: NSSet?  // Связь с сессиями сканирования
+    @NSManaged var advertisedData: String
     
     // Вспомогательные методы для связи с сессиями
     func addToScanSessions(_ value: ScanSession) {

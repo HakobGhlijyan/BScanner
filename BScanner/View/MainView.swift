@@ -9,7 +9,7 @@ import SwiftUI
 import CoreBluetooth
 import CoreData
 
-struct ContentView: View {
+struct MainView: View {
     @ObservedObject private var bluetoothScanner = BluetoothScanner()
     @State private var searchText = ""
 
@@ -39,46 +39,74 @@ struct ContentView: View {
                     .opacity(searchText == "" ? 0 : 1)
                     .padding(.trailing, 15)
                 }
-                .padding()
+                .padding(.bottom)
                 
-                    // List of discovered peripherals filtered by search text
-                    // Список обнаруженных периферийных устройств, отфильтрованный по тексту поиска
-                List(bluetoothScanner.discoveredPeripherals.filter {
-                    self.searchText.isEmpty ? true : $0.peripheral.name?.lowercased().contains(self.searchText.lowercased()) == true
-                }, id: \.peripheral.identifier) { discoveredPeripheral in
-                    VStack(alignment: .leading) {
-                        Text(discoveredPeripheral.peripheral.name ?? "Unknown Device")
-                        Text(discoveredPeripheral.advertisedData)
-                            .font(.caption)
-                            .foregroundColor(.gray)
+                if bluetoothScanner.isScanning {
+                        // List of discovered peripherals filtered by search text
+                        // Список обнаруженных периферийных устройств, отфильтрованный по тексту поиска
+                    List(bluetoothScanner.discoveredPeripherals.filter {
+                        self.searchText.isEmpty ? true : $0.peripheral.name?.lowercased().contains(self.searchText.lowercased()) == true
+                    }, id: \.peripheral.identifier) { discoveredPeripheral in
+                        VStack(alignment: .leading) {
+                            Text(discoveredPeripheral.peripheral.name ?? "Unknown Device")
+                            Text(discoveredPeripheral.advertisedData)
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        .padding()
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(10)
+                        .padding(4)
                     }
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-                    .padding()
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(10)
-                    .padding(4)
+                    .listStyle(.plain)
+                } else {
+                    DymmyView()
+                        .padding(.bottom)
                 }
-                .listStyle(.plain)
+                
                 
                 //Buttons
                 HStack {
+//                    Button(action: {
+//                        if self.bluetoothScanner.isScanning {
+//                            self.bluetoothScanner.stopScan()
+//                        } else {
+//                            self.bluetoothScanner.startScan()
+//                        }
+//                    }) {
+//                        if bluetoothScanner.isScanning {
+//                            Text("Scanning: Stop")
+//                        } else {
+//                            Text("Scanning: Start")
+//                        }
+//                    }
+//                    .padding()
+//                    .background(bluetoothScanner.isScanning ? Color.red : Color.blue)
+//                    .foregroundColor(Color.white)
+//                    .cornerRadius(15.0)
+                    
                     Button(action: {
-                        if self.bluetoothScanner.isScanning {
-                            self.bluetoothScanner.stopScan()
-                        } else {
-                            self.bluetoothScanner.startScan()
-                        }
+                        self.bluetoothScanner.startScan()
                     }) {
-                        if bluetoothScanner.isScanning {
-                            Text("Scanning: Stop")
-                        } else {
-                            Text("Scanning: Start")
-                        }
+                        Text("Start")
                     }
                     .padding()
-                    .background(bluetoothScanner.isScanning ? Color.red : Color.blue)
+                    .background(Color.green)
                     .foregroundColor(Color.white)
                     .cornerRadius(15.0)
+                    
+                    Button(action: {
+                        self.bluetoothScanner.stopScan()
+                    }) {
+                        Text("Stop")
+                    }
+                    .padding()
+                    .background(Color.red)
+                    .foregroundColor(Color.white)
+                    .cornerRadius(15.0)
+                    
+                    Spacer()
                     
                     NavigationLink(destination: HistoryView()) {
                         Text("Scanning History")
@@ -88,6 +116,7 @@ struct ContentView: View {
                             .cornerRadius(15.0)
                     }
                 }
+                .padding(.bottom)
             }
             .padding()
             .navigationTitle("Bluetooth Scanner")
@@ -97,7 +126,7 @@ struct ContentView: View {
 
 
 #Preview {
-    ContentView()
+    MainView()
 }
 
 //struct HistoryView1: View {
@@ -209,13 +238,14 @@ struct HistoryView: View {
                                 Text("UUID: \(device.uuid)")
                                     .font(.caption)
                                     .foregroundColor(.gray)
-                                Text("RSSI: \(device.rssi) dB")
-                                    .font(.caption)
+                                Text("RSSI: \(device.advertisedData) dB")
+                                    .font(.callout)
                                     .foregroundColor(.gray)
                             }
                         }
                     }
                 }
+                .listStyle(.plain)
                 .onAppear {
                     viewModel.fetchSessions()
                 }
