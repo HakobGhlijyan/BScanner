@@ -17,6 +17,14 @@ class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
     var discoveredPeripheralSet = Set<CBPeripheral>()
     var timer: Timer?
     
+    @Published var isShowingAlert: Bool = false
+    @Published var alertMessage: String = ""
+    
+    func showErrorAlert(message: String) {
+        self.alertMessage = message
+        self.isShowingAlert = true
+    }
+    
     override init() {
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: nil)
@@ -76,26 +84,31 @@ class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
 
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         switch central.state {
-            case .unknown:
-                print("central.state is .unknown")
-                stopScan()
-            case .resetting:
-                print("central.state is .resetting")
-                stopScan()
-            case .unsupported:
-                print("central.state is .unsupported")
-                stopScan()
-            case .unauthorized:
-                print("central.state is .unauthorized")
-                stopScan()
-            case .poweredOff:
-                print("central.state is .poweredOff")
-                stopScan()
-            case .poweredOn:
-                print("central.state is .poweredOn")
-                //startScan() this only auto start
-            @unknown default:
-                print("central.state is unknown")
+        case .unknown:
+            print("central.state is .unknown")
+            showErrorAlert(message: "unknown")
+            stopScan()
+        case .resetting:
+            print("central.state is .resetting")
+            showErrorAlert(message: "resetting")
+            stopScan()
+        case .unsupported:
+            print("central.state is .unsupported")
+            showErrorAlert(message: "unsupported")
+            stopScan()
+        case .unauthorized:
+            print("central.state is .unauthorized")
+            showErrorAlert(message: "unauthorized")
+            stopScan()
+        case .poweredOff:
+            print("central.state is .poweredOff")
+            showErrorAlert(message: "Bluetooh Powered Off")
+            stopScan()
+        case .poweredOn:
+            print("central.state is .poweredOn")
+            showErrorAlert(message: "Bluetooh Powered On")
+        @unknown default:
+            print("central.state is unknown")
         }
     }
     
@@ -120,9 +133,4 @@ class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
             }
         }
     }
-
-    func showErrorAlert(message: String) {
-
-    }
-    
 }

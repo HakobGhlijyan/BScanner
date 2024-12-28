@@ -66,10 +66,11 @@ struct MainView: View {
                             Text("Start")
                                 .frame(height: 40)
                                 .frame(maxWidth: .infinity)
-                                .background(Color.green)
+                                .background(buttonDisabled() ? Color.gray : Color.green)
                                 .foregroundColor(Color.white)
                                 .cornerRadius(15.0)
                         }
+                        .disabled(buttonDisabled())
                         
                         Button(action: {
                             self.bluetoothScanner.stopScan()
@@ -77,10 +78,11 @@ struct MainView: View {
                             Text("Stop")
                                 .frame(height: 40)
                                 .frame(maxWidth: .infinity)
-                                .background(Color.red)
+                                .background(buttonDisabled() ? Color.gray : Color.red)
                                 .foregroundColor(Color.white)
                                 .cornerRadius(15.0)
                         }
+                        .disabled(buttonDisabled())
                     }
                     NavigationLink(destination: HistoryView()) {
                         Text("Scan History")
@@ -93,8 +95,26 @@ struct MainView: View {
                 }
                 .padding(.bottom)
             }
+            .onAppear {
+                buttonDisabled()
+            }
             .padding()
+            .alert(
+                isPresented: $bluetoothScanner.isShowingAlert,
+                content: {
+                    Alert(title: Text(bluetoothScanner.alertMessage), message: buttonDisabled() ? Text("Please try again , enable Bluetooth") : Text("Start Scan"))
+            })
             .navigationTitle("Bluetooth Scanner")
+        }
+    }
+    
+    @discardableResult
+    func buttonDisabled() -> Bool {
+        switch bluetoothScanner.centralManager.state {
+        case .poweredOff:
+            true
+        default:
+            false
         }
     }
 }
