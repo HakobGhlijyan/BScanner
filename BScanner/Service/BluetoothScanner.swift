@@ -86,24 +86,15 @@ class BluetoothScanner: NSObject, CBCentralManagerDelegate, ObservableObject {
         switch central.state {
         case .unknown:
             print("central.state is .unknown")
-            showErrorAlert(message: "unknown")
-            stopScan()
         case .resetting:
             print("central.state is .resetting")
-            showErrorAlert(message: "resetting")
-            stopScan()
         case .unsupported:
             print("central.state is .unsupported")
-            showErrorAlert(message: "unsupported")
-            stopScan()
         case .unauthorized:
             print("central.state is .unauthorized")
-            showErrorAlert(message: "unauthorized")
-            stopScan()
         case .poweredOff:
             print("central.state is .poweredOff")
             showErrorAlert(message: "Bluetooh Powered Off")
-            stopScan()
         case .poweredOn:
             print("central.state is .poweredOn")
             showErrorAlert(message: "Bluetooh Powered On")

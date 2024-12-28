@@ -95,9 +95,6 @@ struct MainView: View {
                 }
                 .padding(.bottom)
             }
-            .onAppear {
-                buttonDisabled()
-            }
             .padding()
             .alert(
                 isPresented: $bluetoothScanner.isShowingAlert,
