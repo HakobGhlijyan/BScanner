@@ -15,11 +15,11 @@ struct MainView: View {
 
     var body: some View {
         NavigationView {
-            VStack {
+            VStack(alignment: .center) {
                 ZStack(alignment: .trailing) {
                     TextField("Search", text: $searchText)
-                        .padding()
-                    
+                        .padding(10)
+                        .font(.callout)
                         .background(.gray.opacity(0.1))
                         .cornerRadius(10)
                     
@@ -36,54 +36,56 @@ struct MainView: View {
                 }
                 .padding(.bottom)
                 
-                if bluetoothScanner.isScanning {
-                    List(bluetoothScanner.discoveredPeripherals.filter {
-                        self.searchText.isEmpty ? true : $0.peripheral.name?.lowercased().contains(self.searchText.lowercased()) == true
-                    }, id: \.peripheral.identifier) { discoveredPeripheral in
-                        VStack(alignment: .leading) {
-                            Text(discoveredPeripheral.peripheral.name ?? "Unknown Device")
-                            Text(discoveredPeripheral.advertisedData)
-                                .font(.caption)
-                                .foregroundColor(.gray)
+                ScrollView {
+                    if bluetoothScanner.isScanning {
+                        ForEach(bluetoothScanner.discoveredPeripherals.filter {
+                            self.searchText.isEmpty ? true : $0.peripheral.name?.lowercased().contains(self.searchText.lowercased()) == true
+                        }, id: \.peripheral.identifier) { discoveredPeripheral in
+                            VStack(alignment: .leading) {
+                                Text(discoveredPeripheral.peripheral.name ?? "Unknown Device")
+                                Text(discoveredPeripheral.advertisedData)
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .topLeading)
+                            .padding()
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(10)
+                            .padding(4)
                         }
-                        .frame(maxWidth: .infinity, alignment: .topLeading)
-                        .padding()
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(10)
-                        .padding(4)
+                    } else {
+                        DymmyView()
                     }
-                    .listStyle(.plain)
-                } else {
-                    DymmyView()
-                        .padding(.bottom)
                 }
                 
-                HStack {
-                    Button(action: {
-                        self.bluetoothScanner.startScan()
-                    }) {
-                        Text("Start")
+                VStack {
+                    HStack {
+                        Button(action: {
+                            self.bluetoothScanner.startScan()
+                        }) {
+                            Text("Start")
+                                .frame(height: 40)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.green)
+                                .foregroundColor(Color.white)
+                                .cornerRadius(15.0)
+                        }
+                        
+                        Button(action: {
+                            self.bluetoothScanner.stopScan()
+                        }) {
+                            Text("Stop")
+                                .frame(height: 40)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.red)
+                                .foregroundColor(Color.white)
+                                .cornerRadius(15.0)
+                        }
                     }
-                    .padding()
-                    .background(Color.green)
-                    .foregroundColor(Color.white)
-                    .cornerRadius(15.0)
-                    
-                    Button(action: {
-                        self.bluetoothScanner.stopScan()
-                    }) {
-                        Text("Stop")
-                    }
-                    .padding()
-                    .background(Color.red)
-                    .foregroundColor(Color.white)
-                    .cornerRadius(15.0)
-                    
-                    Spacer()
-                    
                     NavigationLink(destination: HistoryView()) {
-                        Text("Scanning History")
-                            .padding()
+                        Text("Scan History")
+                            .frame(height: 45)
+                            .frame(maxWidth: .infinity)
                             .background(Color.blue)
                             .foregroundColor(Color.white)
                             .cornerRadius(15.0)

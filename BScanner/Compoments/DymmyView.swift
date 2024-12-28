@@ -9,42 +9,42 @@ import SwiftUI
 
 struct DymmyView: View {
     var body: some View {
-        ZStack {
-            Color.gray.opacity(0.1)
-            
-            VStack(alignment: .center, spacing: 40.0) {
-                if #available(iOS 16.0, *) {
-                    Image(systemName: "list.bullet.clipboard.fill")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 100, height: 100)
-                } else {
-                    Image(systemName: "doc.text.fill")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 100, height: 100)
-                }
-                    
-                VStack {
-                    Text("Start Scanning")
-                        .font(.title)
-                        .fontWeight(.bold)
-                    Text("Device list is empty")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                    Text("Press start scanning button")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                    Text("And press stop save all devices ")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                }
+        VStack(alignment: .center, spacing: 20) {
+            Image(systemName: "doc.text.fill")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 40, height: 40)
                 
+            VStack {
+                Text("Start Scanning")
+                    .font(.title)
+                    .fontWeight(.bold)
+                Text("Device list is empty")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+
+                ForEach(0...2, id: \.self) { _ in
+                    VStack {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 6)
+                            .padding(.horizontal, 50)
+                            .foregroundColor(.gray.opacity(0.2))
+                        ForEach(0...2, id: \.self) { _ in
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 4)
+                                    .padding(.horizontal, 50)
+                                    .padding(.trailing, 60)
+                                    .foregroundColor(.gray.opacity(0.1))
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
             }
-            .padding()
         }
-        .frame(maxWidth: UIScreen.main.bounds.width, maxHeight: UIScreen.main.bounds.height)
-        .cornerRadius(10)
+        .padding(.vertical, 40)
+        .padding(.horizontal, 40)
     }
 }
 
