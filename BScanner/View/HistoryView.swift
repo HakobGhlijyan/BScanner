@@ -83,6 +83,15 @@ struct HistoryView: View {
         .onAppear {
             viewModel.fetchSessions()
         }
+        .toolbar {
+            ToolbarItem(placement: .keyboard) {
+                Button("Done Search") {
+                    hideKeyboard()
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .hideKeyboardOnTap()
         .navigationTitle("Scanning History")
         .navigationBarTitleDisplayMode(.inline)
     }

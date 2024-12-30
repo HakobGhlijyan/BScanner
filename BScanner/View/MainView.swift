@@ -101,9 +101,18 @@ struct MainView: View {
                 content: {
                     Alert(title: Text(bluetoothScanner.alertMessage), message: buttonDisabled() ? Text("Please try again , enable Bluetooth") : Text("Start Scan"))
             })
+            .toolbar {
+                ToolbarItem(placement: .keyboard) {
+                    Button("Done Search") {
+                        hideKeyboard()
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+            .hideKeyboardOnTap()
             .navigationTitle("Bluetooth Scanner")
         }
-    }
+   }
     
     @discardableResult
     func buttonDisabled() -> Bool {
